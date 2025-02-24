@@ -167,6 +167,7 @@ add_player()
 add_player()
 
 clock = pygame.time.Clock()
+delta_time = 0
 while running:
     # CALCULATING
     for event in pygame.event.get():
@@ -201,10 +202,10 @@ while running:
             for p in players:
                 # Move the player
                 if keyboard.is_key_down(p.left_key):
-                    p.turn_left()
+                    p.turn_left(delta_time)
                 elif keyboard.is_key_down(p.right_key):
-                    p.turn_right()
-                p.move()
+                    p.turn_right(delta_time)
+                p.update(delta_time)
                 # Check if the player left the screen
                 if not (SCREEN_WIDTH - p.radius > p.position.x > p.radius and SCREEN_HEIGHT - p.radius > p.position.y > p.radius + TOP_MENU_HEIGHT):
                     p.lose()
@@ -217,7 +218,6 @@ while running:
             foreground.fill(TRANSPARENT)
 
             for p in players:
-                p.update_gaps(1.0 / FPS)
                 if not p.gap:
                     draw_trail(background, p)  # Draw the new trail
                 activate_trail(background, p)  # Activate only the ring around the player
@@ -261,8 +261,8 @@ while running:
     # Reset pressed state on keyboard
     keyboard.reset_frame_state()
 
-    # Control frame rate
-    clock.tick(FPS)
+    # Control frame rate and calculate delta time
+    delta_time = clock.tick(FPS) / 1000
 
 # Quit pygame
 pygame.quit()
