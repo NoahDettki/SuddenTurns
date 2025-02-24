@@ -1,6 +1,7 @@
 # Sudden Turns
 
-![Screenshot](Screenshot.png "Sudden Turns")
+![Screenshot1](Screenshot1.png "Sudden Turns Home")
+![Screenshot2](Screenshot2.png "Sudden Turns Ingame")
 
 ## Description
 
