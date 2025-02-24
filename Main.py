@@ -253,7 +253,6 @@ while running:
         case GameState.GAME_OVER:
             if keyboard.was_key_pressed(pygame.K_SPACE):
                 next_round()
-            continue
 
     # Update display
     pygame.display.flip()
