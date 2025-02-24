@@ -191,6 +191,12 @@ def draw_trail(surface, player):
             if (x - cx)**2 + (y - cy)**2 <= radius**2:  # Check if inside the circle
                 process_pixel(surface, x, y, player)
 
+def adrian():
+    if keyboard.was_key_pressed(pygame.K_LCTRL) and len(players) == 2:
+        players[1].radius += 1
+    if keyboard.was_key_pressed(pygame.K_RCTRL) and len(players) == 2:
+        players[0].radius += 1
+
 def render_ui():
     pygame.draw.rect(screen, MENU_COLOR, (0, 0, SCREEN_WIDTH, TOP_MENU_HEIGHT))
     render_text("ESC: Home", screen, (10, 10), FONT_S, TEXT_COLOR, anchor=Anchor.TOP_LEFT)
@@ -269,6 +275,7 @@ while running:
                 game_state = GameState.INGAME
         
         case GameState.INGAME:
+            adrian()
             alive_players_count = 0
             winner = None
             for p in players:
@@ -301,7 +308,7 @@ while running:
             screen.blit(foreground, (0, 0))
 
             # I am handling the game over screen after all other draw calls because I want the players to
-            # actually see the circles overlap the screen or another line. Otherwise the game over screen
+            # actually see the crash (circles overlap the screen or another line). Otherwise the game over screen
             # would show the last frame in which no winner was defined yet.
             if alive_players_count == 0:
                 message = "It's a draw!"

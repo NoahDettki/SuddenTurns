@@ -62,6 +62,7 @@ class Player:
     def reset_to_starting_position(self, x, y, rotation):
         self.position = Vector2(x, y)
         self.direction = rotation
+        self.radius = 4
         self.alive = True
 
 class PlayerSetup:
