@@ -58,7 +58,7 @@ font_s = pygame.font.Font(None, 24)
 font_l = pygame.font.Font(None, 40)
 font_xl = pygame.font.Font(None, 50)
 
-pygame.display.set_caption("Be careful of sudden turns!")
+pygame.display.set_caption("Sudden Turns")
 
 keyboard = Keyboard()
 game_state = GameState.HOME
@@ -75,9 +75,10 @@ def draw_home_screen():
     background.fill(BG_COLOR)
     screen.blit(background, (0, 0))
     font_s = pygame.font.Font(None, 24)
-    font_xl = pygame.font.Font(None, 50)
+    font_xl = pygame.font.Font(None, 60)
     render_text("ESC: Quit", screen, (45, 15), font_s, TEXT_COLOR)
-    render_text("Be careful of sudden turns!", screen, (SCREEN_WIDTH / 2, 150), font_xl, TEXT_COLOR)
+    render_text("Be careful of", screen, (SCREEN_WIDTH / 2, 110), font_l, TEXT_COLOR)
+    render_text("SUDDEN TURNS", screen, (SCREEN_WIDTH / 2, 150), font_xl, TEXT_COLOR)
     # Render player count
     for i in range(len(PLAYER_SETUP)):
         color = PLAYER_SETUP[i].inactive_color if i < len(players) else DISABLED_TEXT_COLOR
@@ -233,7 +234,7 @@ while running:
                 message = "It's a draw!"
                 if len(players) == 1:
                     message = MOTIVATIONAL_MESSAGES[random.randrange(0, len(MOTIVATIONAL_MESSAGES))]
-                render_text(message, screen, (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2), font_xl, TEXT_COLOR, BG_COLOR)
+                render_text(message, screen, (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2), font_l, TEXT_COLOR, BG_COLOR)
                 game_state = GameState.GAME_OVER
             elif alive_players_count == 1 and len(players) > 1: # solo mode has no winners :(
                 winner.score += 1

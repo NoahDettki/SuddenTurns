@@ -18,7 +18,7 @@ class Player:
         self.gap_time = 0.29
         self._gap_timer = 0
         self.max_time_without_gap = 3
-        self.gap_propability = 0.01
+        self.gap_propability = 0.005
         self.alive = True
         self.score = 0
 
