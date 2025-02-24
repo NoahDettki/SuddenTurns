@@ -1,6 +1,7 @@
 import pygame
 import sys
 import random
+import math
 from enum import Enum
 from Keyboard import Keyboard
 from Player import Player, PlayerSetup
@@ -11,17 +12,24 @@ class GameState(Enum):
     INGAME = 2
     GAME_OVER = 3
 
+class Anchor(Enum):
+    CENTER = 1
+    TOP_LEFT = 2
+    TOP_CENTER = 3
+    TOP_RIGHT = 4
+
 # Initialize pygame
 pygame.init()
 
 # Constants
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 600
+# Constants for ingame state
+FPS = 120
 SPAWN_BORDER_OUT = 20 # Distance between screen border and the outer edge of the spawn area
 SPAWN_BORDER_IN = 50 # Distance between screen border and the inner edge of the spawn area
 TOP_MENU_HEIGHT = 28
 PLAYER_SCORES_GAP = 100
-FPS = 120
 
 TRANSPARENT = (0, 0, 0, 0)
 BG_COLOR = (41, 48, 61)
@@ -54,9 +62,9 @@ foreground = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
 background = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
 background.fill(BG_COLOR)
 # Define font
-font_s = pygame.font.Font(None, 24)
-font_l = pygame.font.Font(None, 40)
-font_xl = pygame.font.Font(None, 50)
+FONT_S = pygame.font.Font(None, 24)
+FONT_L = pygame.font.Font(None, 40)
+FONT_XL = pygame.font.Font(None, 100)
 
 pygame.display.set_caption("Sudden Turns")
 
@@ -65,25 +73,45 @@ game_state = GameState.HOME
 players = []
 running = True
 
-def render_text(text, screen, position, font, color, background=None):
-    t = font.render(text, True, color, background)
-    t_rect = t.get_rect(center=position)
-    screen.blit(t, t_rect)
+def render_text(text, screen, position, font, color, background=None, anchor=Anchor.CENTER):
+    font_surface = font.render(text, True, color, background)
+    t_rect = None
+    match anchor:
+        case Anchor.TOP_LEFT:
+            t_rect = font_surface.get_rect(topleft=position)
+        case Anchor.TOP_CENTER:
+            t_rect = font_surface.get_rect(midtop=position)
+        case Anchor.TOP_RIGHT:
+            t_rect = font_surface.get_rect(topright=position)
+        case _:
+            t_rect = font_surface.get_rect(center=position)
+    screen.blit(font_surface, t_rect)
+
+# Constants for home menu
+TITLE_Y = 175
+PLAYER_LIST_START_Y = 275
+PLAYER_LIST_WIDTH = 400
+PLAYER_LIST_GAP_Y = 50
 
 def draw_home_screen():
-    global font_s, font_l, font_xl
+    # Clear screen with solid bg color
     background.fill(BG_COLOR)
     screen.blit(background, (0, 0))
-    font_s = pygame.font.Font(None, 24)
-    font_xl = pygame.font.Font(None, 60)
-    render_text("ESC: Quit", screen, (45, 15), font_s, TEXT_COLOR)
-    render_text("Be careful of", screen, (SCREEN_WIDTH / 2, 110), font_l, TEXT_COLOR)
-    render_text("SUDDEN TURNS", screen, (SCREEN_WIDTH / 2, 150), font_xl, TEXT_COLOR)
-    # Render player count
+    # Render all Text
+    render_text("ESC: Quit", screen, (10, 10), FONT_S, TEXT_COLOR, anchor=Anchor.TOP_LEFT)
+    render_text("Be careful of", screen, (SCREEN_WIDTH/2, TITLE_Y - 70), FONT_L, TEXT_COLOR)
+    render_text(f"SUDDEN TURNS", screen, (SCREEN_WIDTH/2, TITLE_Y), FONT_XL, TEXT_COLOR)
+    # Render available players: name, left_key, right_key
     for i in range(len(PLAYER_SETUP)):
-        color = PLAYER_SETUP[i].inactive_color if i < len(players) else DISABLED_TEXT_COLOR
-        render_text(f"{PLAYER_SETUP[i].name}: {pygame.key.name(PLAYER_SETUP[i].left_key).upper()} {pygame.key.name(PLAYER_SETUP[i].right_key).upper()}", screen, (SCREEN_WIDTH / 2, 250 + i * 50), font_l, color)
-    render_text("UP: Remove Player     DOWN: Add Player     SPACE: Start Game", screen, (SCREEN_WIDTH / 2, SCREEN_HEIGHT - 100), font_s, TEXT_COLOR)
+        color = PLAYER_SETUP[i].inactive_color
+        shake_x = math.sin(i + pygame.time.get_ticks()/150) * 4
+        if i >= len(players):
+            color = DISABLED_TEXT_COLOR
+            shake_x = 0
+        render_text(f"{PLAYER_SETUP[i].name}:", screen, (SCREEN_WIDTH/2 - PLAYER_LIST_WIDTH/2 + shake_x, PLAYER_LIST_START_Y + i * PLAYER_LIST_GAP_Y), FONT_L, color, anchor=Anchor.TOP_LEFT)
+        render_text(pygame.key.name(PLAYER_SETUP[i].left_key).upper(), screen, (SCREEN_WIDTH/2 + shake_x, PLAYER_LIST_START_Y + i * PLAYER_LIST_GAP_Y), FONT_L, color, anchor=Anchor.TOP_LEFT)
+        render_text(pygame.key.name(PLAYER_SETUP[i].right_key).upper(), screen, (SCREEN_WIDTH/2 + PLAYER_LIST_WIDTH/2 + shake_x, PLAYER_LIST_START_Y + i * PLAYER_LIST_GAP_Y), FONT_L, color, anchor=Anchor.TOP_RIGHT)
+    render_text("UP: Remove Player     DOWN: Add Player     SPACE: Start Game", screen, (SCREEN_WIDTH/2, SCREEN_HEIGHT - 50), FONT_S, TEXT_COLOR)
 
 # Players can spawn in a frame-shaped area around the playing field.
 def calculate_starting_position(side):
@@ -234,21 +262,21 @@ while running:
                 message = "It's a draw!"
                 if len(players) == 1:
                     message = MOTIVATIONAL_MESSAGES[random.randrange(0, len(MOTIVATIONAL_MESSAGES))]
-                render_text(message, screen, (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2), font_l, TEXT_COLOR, BG_COLOR)
+                render_text(message, screen, (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2), FONT_L, TEXT_COLOR, BG_COLOR)
                 game_state = GameState.GAME_OVER
             elif alive_players_count == 1 and len(players) > 1: # solo mode has no winners :(
                 winner.score += 1
-                render_text(f"{winner.name} won!", screen, (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2), font_xl, winner.inactive_color, BG_COLOR)
+                render_text(f"{winner.name} won!", screen, (SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2), FONT_XL, winner.inactive_color, BG_COLOR)
                 game_state = GameState.GAME_OVER
 
             pygame.draw.rect(screen, MENU_COLOR, (0, 0, SCREEN_WIDTH, TOP_MENU_HEIGHT))
-            render_text("ESC: Home", screen, (51, 15), font_s, TEXT_COLOR)
+            render_text("ESC: Home", screen, (10, 10), FONT_S, TEXT_COLOR, anchor=Anchor.TOP_LEFT)
             # Rendering player scores
             total_width = (len(players) - 1) * PLAYER_SCORES_GAP
             start_x = (SCREEN_WIDTH - total_width) / 2  # Centering formula
             for i in range(len(players)):
                 x = start_x + i * PLAYER_SCORES_GAP
-                render_text(f"{players[i].name}: {players[i].score}", screen, (x, 15), font_s, players[i].inactive_color)
+                render_text(f"{players[i].name}: {players[i].score}", screen, (x, 15), FONT_S, players[i].inactive_color)
         
         case GameState.GAME_OVER:
             if keyboard.was_key_pressed(pygame.K_SPACE):
