@@ -20,6 +20,7 @@ class Anchor(Enum):
 
 # Initialize pygame
 pygame.init()
+pygame.mixer.init()
 
 # Constants
 SCREEN_WIDTH = 800
@@ -65,6 +66,11 @@ background.fill(BG_COLOR)
 FONT_S = pygame.font.Font(None, 24)
 FONT_L = pygame.font.Font(None, 40)
 FONT_XL = pygame.font.Font(None, 100)
+# Define sounds
+sound_plop = pygame.mixer.Sound("sounds/small_plop.mp3")
+sound_bling = pygame.mixer.Sound("sounds/bling.mp3")
+sound_big_plop = pygame.mixer.Sound("sounds/big_plop.mp3")
+sound_pop = pygame.mixer.Sound("sounds/pop.mp3")
 
 pygame.display.set_caption("Sudden Turns")
 
@@ -166,7 +172,8 @@ def activate_trail(surface, player):
 def process_pixel(surface, x, y, player):
     """Modifies the pixel at (x, y) on the surface with the given color."""
     if 0 <= x < surface.get_width() and 0 <= y < surface.get_height():
-        if surface.get_at((x, y)) != BG_COLOR and surface.get_at((x, y)) != player.inactive_color:
+        if surface.get_at((x, y)) != BG_COLOR and surface.get_at((x, y)) != player.inactive_color and player.alive:
+            sound_pop.play()
             player.lose()
         surface.set_at((x, y), player.inactive_color)
 
@@ -189,6 +196,7 @@ def next_round():
         p.reset_to_starting_position(x, y, rotation)
     game_state = GameState.INGAME
 
+#######################################################################################################################
 # 2 Players is the default setting but the players can
 # increase or decrease the number in the home screen
 add_player()
@@ -211,16 +219,21 @@ while running:
             # Delete player scores and return to home screen when not already in home screen
             for p in players:
                 p.score = 0
+            sound_big_plop.play()
             game_state = GameState.HOME
 
     match game_state:
         case GameState.HOME:
             if keyboard.was_key_pressed(pygame.K_UP):
                 if len(players) > 1:
+                    sound_plop.play()
                     players.pop()
             if keyboard.was_key_pressed(pygame.K_DOWN):
-                add_player()
+                if len(players) < len(PLAYER_SETUP):
+                    sound_plop.play()
+                    add_player()
             if keyboard.was_key_pressed(pygame.K_SPACE):
+                sound_bling.play()
                 next_round()
             draw_home_screen()
         
@@ -236,6 +249,7 @@ while running:
                 p.update(delta_time)
                 # Check if the player left the screen
                 if not (SCREEN_WIDTH - p.radius > p.position.x > p.radius and SCREEN_HEIGHT - p.radius > p.position.y > p.radius + TOP_MENU_HEIGHT):
+                    sound_pop.play()
                     p.lose()
                 # Check if player is still alive
                 if p.alive:
