@@ -40,10 +40,10 @@ MENU_COLOR = (65, 74, 89)
 TEXT_COLOR = (255, 255, 255)
 DISABLED_TEXT_COLOR = (67, 75, 89)
 PLAYER_SETUP = [
-    PlayerSetup((66, 209, 245), (66, 135, 245), pygame.K_a, pygame.K_d, "Blue"),
+    PlayerSetup((66, 209, 245), (66, 135, 245), pygame.K_a, pygame.K_s, "Blue"),
     PlayerSetup((250, 181, 125), (247, 136, 45), pygame.K_LEFT, pygame.K_RIGHT, "Orange"),
-    PlayerSetup((120, 255, 145), (40, 235, 76), pygame.K_b, pygame.K_m, "Green"),
-    PlayerSetup((199, 161, 212), (203, 91, 240), pygame.K_KP1, pygame.K_KP3, "Purple")
+    PlayerSetup((120, 255, 145), (40, 235, 76), pygame.K_v, pygame.K_b, "Green"),
+    PlayerSetup((199, 161, 212), (203, 91, 240), pygame.K_k, pygame.K_l, "Purple")
 ]
 MOTIVATIONAL_MESSAGES = [
     "Wow, you've covered such a long trail!",
