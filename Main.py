@@ -286,7 +286,7 @@ while running:
                     p.turn_right(delta_time)
                 p.update(delta_time)
                 # Check if the player left the screen
-                if not (SCREEN_WIDTH - p.radius > p.position.x > p.radius and SCREEN_HEIGHT - p.radius > p.position.y > p.radius + TOP_MENU_HEIGHT):
+                if not (SCREEN_WIDTH - p.radius > p.position.x > p.radius and SCREEN_HEIGHT - p.radius > p.position.y > p.radius + TOP_MENU_HEIGHT) and p.alive:
                     sound_pop.play()
                     p.lose()
                 # Check if player is still alive
