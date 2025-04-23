@@ -69,10 +69,13 @@ FONT_S = pygame.font.Font(None, 24)
 FONT_L = pygame.font.Font(None, 40)
 FONT_XL = pygame.font.Font(None, 100)
 # Define sounds
-sound_plop = pygame.mixer.Sound("sounds/small_plop.mp3")
-sound_bling = pygame.mixer.Sound("sounds/bling.mp3")
-sound_big_plop = pygame.mixer.Sound("sounds/big_plop.mp3")
-sound_pop = pygame.mixer.Sound("sounds/pop.mp3")
+sound_muted = False
+sounds = {
+    "plop": pygame.mixer.Sound("sounds/small_plop.mp3"),
+    "bling": pygame.mixer.Sound("sounds/bling.mp3"),
+    "big_plop": pygame.mixer.Sound("sounds/big_plop.mp3"),
+    "pop": pygame.mixer.Sound("sounds/pop.mp3")
+}
 
 pygame.display.set_caption("Sudden Turns")
 
@@ -108,7 +111,7 @@ def draw_home_screen():
     background.fill(BG_COLOR)
     screen.blit(background, (0, 0))
     # Render all Text
-    render_text("ESC: Quit", screen, (10, 10), FONT_S, TEXT_COLOR, anchor=Anchor.TOP_LEFT)
+    render_text(f"ESC: Quit     M: {'Unmute' if sound_muted else 'Mute'}", screen, (10, 10), FONT_S, TEXT_COLOR, anchor=Anchor.TOP_LEFT)
     render_text("Be careful of", screen, (CENTER.x, TITLE_Y - 70), FONT_L, TEXT_COLOR)
     render_text(f"SUDDEN TURNS", screen, (CENTER.x, TITLE_Y), FONT_XL, TEXT_COLOR)
     # Render available players: name, left_key, right_key
@@ -177,7 +180,7 @@ def process_pixel(surface, x, y, player):
     """Modifies the pixel at (x, y) on the surface with the given color."""
     if 0 <= x < surface.get_width() and 0 <= y < surface.get_height():
         if surface.get_at((x, y)) != BG_COLOR and surface.get_at((x, y)) != player.inactive_color and player.alive:
-            sound_pop.play()
+            sounds["pop"].play()
             player.lose()
         surface.set_at((x, y), player.inactive_color)
 
@@ -199,7 +202,7 @@ def adrian():
 
 def render_ui():
     pygame.draw.rect(screen, MENU_COLOR, (0, 0, SCREEN_WIDTH, TOP_MENU_HEIGHT))
-    render_text("ESC: Home", screen, (10, 10), FONT_S, TEXT_COLOR, anchor=Anchor.TOP_LEFT)
+    render_text(f"ESC: Home     M: {'Unmute' if sound_muted else 'Mute'}", screen, (10, 10), FONT_S, TEXT_COLOR, anchor=Anchor.TOP_LEFT)
     # Rendering player scores
     total_width = (len(players) - 1) * PLAYER_SCORES_GAP
     start_x = (SCREEN_WIDTH - total_width) / 2  # Centering formula
@@ -241,21 +244,31 @@ while running:
             # Delete player scores and return to home screen when not already in home screen
             for p in players:
                 p.score = 0
-            sound_big_plop.play()
+            sounds["big_plop"].play()
             game_state = GameState.HOME
+    
+    if keyboard.was_key_pressed(pygame.K_m):
+        if sound_muted:
+            for s in sounds:
+                sounds[s].set_volume(1)
+            sound_muted = False
+        else:
+            for s in sounds:
+                sounds[s].set_volume(0)
+            sound_muted = True
 
     match game_state:
         case GameState.HOME:
             if keyboard.was_key_pressed(pygame.K_UP):
                 if len(players) > 1:
-                    sound_plop.play()
+                    sounds["plop"].play()
                     players.pop()
             if keyboard.was_key_pressed(pygame.K_DOWN):
                 if len(players) < len(PLAYER_SETUP):
-                    sound_plop.play()
+                    sounds["plop"].play()
                     add_player()
             if keyboard.was_key_pressed(pygame.K_SPACE):
-                sound_bling.play()
+                sounds["bling"].play()
                 next_round()
             draw_home_screen()
 
@@ -270,7 +283,7 @@ while running:
             timer -= delta_time
             if math.ceil(timer) < last_timer_number:
                 last_timer_number = math.ceil(timer)
-                sound_plop.play()
+                sounds["plop"].play()
             if timer <= 0:
                 game_state = GameState.INGAME
         
@@ -287,7 +300,7 @@ while running:
                 p.update(delta_time)
                 # Check if the player left the screen
                 if not (SCREEN_WIDTH - p.radius > p.position.x > p.radius and SCREEN_HEIGHT - p.radius > p.position.y > p.radius + TOP_MENU_HEIGHT) and p.alive:
-                    sound_pop.play()
+                    sounds["pop"].play()
                     p.lose()
                 # Check if player is still alive
                 if p.alive:
@@ -327,7 +340,7 @@ while running:
         
         case GameState.GAME_OVER:
             if keyboard.was_key_pressed(pygame.K_SPACE):
-                sound_plop.play()
+                sounds["plop"].play()
                 next_round()
 
     # Update display
