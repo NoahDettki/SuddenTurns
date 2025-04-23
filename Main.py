@@ -56,6 +56,12 @@ MOTIVATIONAL_MESSAGES = [
     "Sigh...",
     "Better be careful there."
 ]
+SECRET_RANGES = [(570, 576), (10, 16), (254, 260)]
+secret_counter = 0
+SCROLL_SPEED = 0.05
+scroll_timer = 0
+secret_player = Player(PLAYER_SETUP[1], SCREEN_WIDTH - 8, SCREEN_HEIGHT, Vector2(1, 0))
+secret_player_direction = -1
 
 # Set up the screen
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -209,9 +215,11 @@ def render_ui():
     for i in range(len(players)):
         x = start_x + i * PLAYER_SCORES_GAP
         render_text(f"{players[i].name}: {players[i].score}", screen, (x, 10), FONT_S, players[i].inactive_color, anchor=Anchor.TOP_CENTER)
+    if len(players) == 1 and secret_counter < len(SECRET_RANGES):
+        pygame.draw.line(screen, players[0].inactive_color, (SECRET_RANGES[secret_counter][0], TOP_MENU_HEIGHT), (SECRET_RANGES[secret_counter][1], TOP_MENU_HEIGHT))
 
 def next_round():
-    global game_state, background, players, timer, last_timer_number
+    global game_state, background, players, timer, last_timer_number, secret_player
     background.fill(BG_COLOR)
     sides = [0, 1, 2, 3]
     for p in players:
@@ -246,6 +254,7 @@ while running:
                 p.score = 0
             sounds["big_plop"].play()
             game_state = GameState.HOME
+        secret_counter = 0
     
     if keyboard.was_key_pressed(pygame.K_m):
         if sound_muted:
@@ -302,12 +311,35 @@ while running:
                 if not (SCREEN_WIDTH - p.radius > p.position.x > p.radius and SCREEN_HEIGHT - p.radius > p.position.y > p.radius + TOP_MENU_HEIGHT) and p.alive:
                     sounds["pop"].play()
                     p.lose()
+                    if len(players) == 1 and secret_counter < len(SECRET_RANGES) and p.position.x > SECRET_RANGES[secret_counter][0] and p.position.x < SECRET_RANGES[secret_counter][1] and p.position.y <= TOP_MENU_HEIGHT + p.radius:
+                        secret_counter += 1
+                    elif secret_counter < len(SECRET_RANGES):
+                        secret_counter = 0
                 # Check if player is still alive
                 if p.alive:
                     alive_players_count += 1
                     winner = p # only has effect if alive_player_count stays at 1
             
             # DRAWING
+            # Very secret indeed
+            if secret_counter == len(SECRET_RANGES):
+                scroll_timer += delta_time
+                if scroll_timer >= SCROLL_SPEED:
+                    background.scroll(dx=-1)
+                    pygame.draw.rect(background, BG_COLOR, (SCREEN_WIDTH - 1, 0, 1, SCREEN_HEIGHT))
+                    players[0].position.x -= 1
+                    scroll_timer -= SCROLL_SPEED
+                secret_player.update_gaps(delta_time)
+                secret_player.position.y += secret_player_direction * delta_time * secret_player.speed
+                if secret_player.position.y >= SCREEN_HEIGHT:
+                    secret_player_direction = -1
+                elif secret_player.position.y <= TOP_MENU_HEIGHT:
+                    secret_player_direction = 1
+                if not secret_player.gap:
+                    draw_trail(background, secret_player)
+                activate_trail(background, secret_player)
+                
+
             foreground.fill(TRANSPARENT)
 
             for p in players:
